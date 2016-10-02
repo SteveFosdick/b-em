@@ -44,7 +44,7 @@ MENU filemenu[6];
 MENU discmenu[12];
 MENU tapespdmenu[3];
 MENU tapemenu[5];
-MENU modelmenu[17];
+MENU modelmenu[18];
 MENU tubespdmenu[6];
 #ifdef NS32016
 MENU tubemenu[7];
@@ -412,7 +412,7 @@ int gui_model()
         return D_O_K;
 }
 
-MENU modelmenu[17]=
+MENU modelmenu[18]=
 {
         {"BBC A w/OS 0.1",            gui_model, NULL, 0, (void *)0},
         {"BBC B w/OS 0.1",            gui_model, NULL, 0, (void *)1},
@@ -420,6 +420,7 @@ MENU modelmenu[17]=
         {"BBC B w/8271 FDC",          gui_model, NULL, 0, (void *)3},
         {"BBC B w/8271+SWRAM",        gui_model, NULL, 0, (void *)4},
         {"BBC B w/1770 FDC",          gui_model, NULL, 0, (void *)5},
+        {"BBC B w/Solidisk 1770 FDC", gui_model, NULL, 0, (void *)16},
         {"BBC B US",                  gui_model, NULL, 0, (void *)6},
         {"BBC B German",              gui_model, NULL, 0, (void *)7},
         {"BBC B+ 64K",                gui_model, NULL, 0, (void *)8},

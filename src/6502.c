@@ -3518,8 +3518,8 @@ void m6502_exec()
                         pc = readmem(0xFFFA) | (readmem(0xFFFB) << 8);
                         p.i = 1;
                         polltime(7);
+                        //bem_debugf("6502: NMI %02x\n", nmi);
                         nmi = 0;
-//                        printf("NMI\n");
                 }
         }
 }
