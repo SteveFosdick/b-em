@@ -240,3 +240,10 @@ void disc_format(int drive, int track, int side, int density)
            disc_notfound = 10000;
 }
 
+void disc_abort(int drive)
+{
+        if (drives[drive].abort)
+           drives[drive].abort(drive);
+        else
+           disc_notfound = 10000;
+}

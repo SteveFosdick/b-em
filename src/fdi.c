@@ -339,6 +339,11 @@ static void fdi_poll()
         }
 }
 
+static void fdi_abort()
+{
+    fdi_inread = fdi_inwrite = fdi_inreadaddr = 0;
+}
+
 void fdi_init()
 {
 //        printf("FDI reset\n");
@@ -364,6 +369,7 @@ void fdi_load(int drive, char *fn)
         drives[drive].readaddress = fdi_readaddress;
         drives[drive].poll        = fdi_poll;
         drives[drive].format      = fdi_format;
+        drives[drive].abort       = fdi_abort;
 }
 
 void fdi_close(int drive)

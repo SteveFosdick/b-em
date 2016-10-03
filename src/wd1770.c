@@ -83,8 +83,11 @@ void wd1770_setspindown()
 
 #define track0 (wd1770.curtrack ? 0 : 4)
 
+static int data_count = 0;
+
 static void begin_read_sector(const char *variant) {
     bem_debugf("wd1770: %s read sector drive=%d side=%d track=%d sector=%d dens=%d\n", variant, curdrive, wd1770.curside, wd1770.track, wd1770.sector, wd1770.density);
+    data_count = 0;
     wd1770.status = 0x80 | 0x1;
     disc_readsector(curdrive, wd1770.sector, wd1770.track, wd1770.curside, wd1770.density);
     byte = 0;
@@ -184,12 +187,13 @@ static void write_1770(uint16_t addr, uint8_t val)
 
                 case 0xD: /*Force interrupt*/
                     bem_debug("wd1770: force interrupt\n");
+                    disc_abort(curdrive);
                     fdc_time = 0;
                     if (wd1770.status & 0x01)
                         wd1770.status &= ~1;
                     else
                         wd1770.status = 0x80 | 0x20 | track0;
-                    nmi = (val & 0xc) && nmi_on_completion[WD1770] ? 1 : 0;
+                    nmi = nmi_on_completion[WD1770] ? 1 : 0;
                     wd1770_setspindown();
                     break;
 
@@ -345,7 +349,7 @@ static uint8_t read_1770(uint16_t addr)
 
 uint8_t wd1770_read(uint16_t addr)
 {
-    //bem_debugf("wd1770_read: addr=%04x, 1770=%d\n", addr, WD1770);
+    bem_debugf("wd1770_read: addr=%04x, 1770=%d\n", addr, WD1770);
     switch (WD1770)
     {
         case WD1770_ACORN:
@@ -434,6 +438,7 @@ void wd1770_callback()
 
 void wd1770_data(uint8_t dat)
 {
+    bem_debugf("wd1770: data(count=%d, dat=%02x\n", data_count++, dat);
     if (wd1770.status &0x01) {
         wd1770.data = dat;
         wd1770.status |= 2;
