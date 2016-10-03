@@ -19,100 +19,7 @@ static int adf_notfound;
 static int adf_rsector=0;
 static int adf_informat=0;
 
-void adf_init()
-{
-        adf_f[0] = adf_f[1] = 0;
-        adl[0] = adl[1] = 0;
-        adf_notfound = 0;
-}
-
-void adf_load(int drive, char *fn)
-{
-        writeprot[drive] = 0;
-        adf_f[drive] = fopen(fn, "rb+");
-        if (!adf_f[drive])
-        {
-                adf_f[drive] = fopen(fn, "rb");
-                if (!adf_f[drive]) return;
-                writeprot[drive] = 1;
-        }
-        fwriteprot[drive] = writeprot[drive];
-        fseek(adf_f[drive], -1, SEEK_END);
-        if (ftell(adf_f[drive]) > (700 * 1024))
-        {
-                adl[drive] = 1;
-                adf_sectors[drive] = 5;
-                adf_size[drive] = 1024;
-        }
-        else
-        {
-                adl[drive] = 0;
-                adf_sectors[drive] = 16;
-                adf_size[drive] = 256;
-        }
-        drives[drive].seek        = adf_seek;
-        drives[drive].readsector  = adf_readsector;
-        drives[drive].writesector = adf_writesector;
-        drives[drive].readaddress = adf_readaddress;
-        drives[drive].poll        = adf_poll;
-        drives[drive].format      = adf_format;
-        adf_dblstep[drive] = 0;
-}
-
-void adl_load(int drive, char *fn)
-{
-        writeprot[drive] = 0;
-        adf_f[drive] = fopen(fn, "rb+");
-        if (!adf_f[drive])
-        {
-                adf_f[drive] = fopen(fn, "rb");
-                if (!adf_f[drive]) return;
-                writeprot[drive] = 1;
-        }
-        fwriteprot[drive] = writeprot[drive];
-        adl[drive] = 1;
-        drives[drive].seek        = adf_seek;
-        drives[drive].readsector  = adf_readsector;
-        drives[drive].writesector = adf_writesector;
-        drives[drive].readaddress = adf_readaddress;
-        drives[drive].poll        = adf_poll;
-        drives[drive].format      = adf_format;
-        adf_sectors[drive] = 16;
-        adf_size[drive] = 256;
-        adf_dblstep[drive] = 0;
-}
-
-void adl_loadex(int drive, char *fn, int sectors, int size, int dblstep)
-{
-        writeprot[drive] = 0;
-        adf_f[drive] = fopen(fn, "rb+");
-        if (!adf_f[drive])
-        {
-                adf_f[drive] = fopen(fn, "rb");
-                if (!adf_f[drive]) return;
-                writeprot[drive] = 1;
-        }
-        fwriteprot[drive] = writeprot[drive];
-        fseek(adf_f[drive], -1, SEEK_END);
-        adl[drive] = 1;
-        drives[drive].seek        = adf_seek;
-        drives[drive].readsector  = adf_readsector;
-        drives[drive].writesector = adf_writesector;
-        drives[drive].readaddress = adf_readaddress;
-        drives[drive].poll        = adf_poll;
-        drives[drive].format      = adf_format;
-        adf_sectors[drive] = sectors;
-        adf_size[drive] = size;
-        adf_dblstep[drive] = dblstep;
-}
-
-void adf_close(int drive)
-{
-        if (adf_f[drive]) fclose(adf_f[drive]);
-        adf_f[drive] = NULL;
-}
-
-void adf_seek(int drive, int track)
+static void adf_seek(int drive, int track)
 {
         if (!adf_f[drive]) return;
 //        bem_debugf("Seek %i %i %i %i %i %i\n",drive,track,adfsectors[drive],adfsize[drive],adl[drive],adfsectors[drive]*adfsize[drive]);
@@ -130,7 +37,8 @@ void adf_seek(int drive, int track)
                 fread(trackinfoa[drive][0], adf_sectors[drive] * adf_size[drive], 1, adf_f[drive]);
         }
 }
-void adf_writeback(int drive, int track)
+
+static void adf_writeback(int drive, int track)
 {
         if (!adf_f[drive]) return;
         if (adf_dblstep[drive]) track /= 2;
@@ -147,7 +55,7 @@ void adf_writeback(int drive, int track)
         }
 }
 
-void adf_readsector(int drive, int sector, int track, int side, int density)
+static void adf_readsector(int drive, int sector, int track, int side, int density)
 {
         adf_sector = sector;
         adf_track  = track;
@@ -167,7 +75,7 @@ void adf_readsector(int drive, int sector, int track, int side, int density)
         adf_readpos = 0;
 }
 
-void adf_writesector(int drive, int sector, int track, int side, int density)
+static void adf_writesector(int drive, int sector, int track, int side, int density)
 {
 //        if (adfdblstep[drive]) track/=2;
         adf_sector = sector;
@@ -186,7 +94,7 @@ void adf_writesector(int drive, int sector, int track, int side, int density)
         adf_readpos = 0;
 }
 
-void adf_readaddress(int drive, int track, int side, int density)
+static void adf_readaddress(int drive, int track, int side, int density)
 {
         if (adf_dblstep[drive]) track /= 2;
         adf_drive = drive;
@@ -203,7 +111,7 @@ void adf_readaddress(int drive, int track, int side, int density)
         adf_readpos    = 0;
 }
 
-void adf_format(int drive, int track, int side, int density)
+static void adf_format(int drive, int track, int side, int density)
 {
         if (adf_dblstep[drive]) track /= 2;
         adf_drive = drive;
@@ -220,7 +128,7 @@ void adf_format(int drive, int track, int side, int density)
         adf_informat  = 1;
 }
 
-void adf_poll()
+static void adf_poll()
 {
         int c;
         adf_time++;
@@ -316,4 +224,97 @@ void adf_poll()
                         }
                 }
         }
+}
+
+void adf_init()
+{
+        adf_f[0] = adf_f[1] = 0;
+        adl[0] = adl[1] = 0;
+        adf_notfound = 0;
+}
+
+void adf_load(int drive, char *fn)
+{
+        writeprot[drive] = 0;
+        adf_f[drive] = fopen(fn, "rb+");
+        if (!adf_f[drive])
+        {
+                adf_f[drive] = fopen(fn, "rb");
+                if (!adf_f[drive]) return;
+                writeprot[drive] = 1;
+        }
+        fwriteprot[drive] = writeprot[drive];
+        fseek(adf_f[drive], -1, SEEK_END);
+        if (ftell(adf_f[drive]) > (700 * 1024))
+        {
+                adl[drive] = 1;
+                adf_sectors[drive] = 5;
+                adf_size[drive] = 1024;
+        }
+        else
+        {
+                adl[drive] = 0;
+                adf_sectors[drive] = 16;
+                adf_size[drive] = 256;
+        }
+        drives[drive].seek        = adf_seek;
+        drives[drive].readsector  = adf_readsector;
+        drives[drive].writesector = adf_writesector;
+        drives[drive].readaddress = adf_readaddress;
+        drives[drive].poll        = adf_poll;
+        drives[drive].format      = adf_format;
+        adf_dblstep[drive] = 0;
+}
+
+void adl_load(int drive, char *fn)
+{
+        writeprot[drive] = 0;
+        adf_f[drive] = fopen(fn, "rb+");
+        if (!adf_f[drive])
+        {
+                adf_f[drive] = fopen(fn, "rb");
+                if (!adf_f[drive]) return;
+                writeprot[drive] = 1;
+        }
+        fwriteprot[drive] = writeprot[drive];
+        adl[drive] = 1;
+        drives[drive].seek        = adf_seek;
+        drives[drive].readsector  = adf_readsector;
+        drives[drive].writesector = adf_writesector;
+        drives[drive].readaddress = adf_readaddress;
+        drives[drive].poll        = adf_poll;
+        drives[drive].format      = adf_format;
+        adf_sectors[drive] = 16;
+        adf_size[drive] = 256;
+        adf_dblstep[drive] = 0;
+}
+
+void adl_loadex(int drive, char *fn, int sectors, int size, int dblstep)
+{
+        writeprot[drive] = 0;
+        adf_f[drive] = fopen(fn, "rb+");
+        if (!adf_f[drive])
+        {
+                adf_f[drive] = fopen(fn, "rb");
+                if (!adf_f[drive]) return;
+                writeprot[drive] = 1;
+        }
+        fwriteprot[drive] = writeprot[drive];
+        fseek(adf_f[drive], -1, SEEK_END);
+        adl[drive] = 1;
+        drives[drive].seek        = adf_seek;
+        drives[drive].readsector  = adf_readsector;
+        drives[drive].writesector = adf_writesector;
+        drives[drive].readaddress = adf_readaddress;
+        drives[drive].poll        = adf_poll;
+        drives[drive].format      = adf_format;
+        adf_sectors[drive] = sectors;
+        adf_size[drive] = size;
+        adf_dblstep[drive] = dblstep;
+}
+
+void adf_close(int drive)
+{
+        if (adf_f[drive]) fclose(adf_f[drive]);
+        adf_f[drive] = NULL;
 }
