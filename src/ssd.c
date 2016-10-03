@@ -139,13 +139,11 @@ static void ssd_poll()
         }
         if (ssd_inread && ssd_f[ssd_drive])
         {
-                bem_debugf("ssd_poll: read %i\n", ssd_readpos);
                 fdc_data(trackinfo[ssd_drive][ssd_side][(ssd_sector << 8) + ssd_readpos]);
                 ssd_readpos++;
                 if (ssd_readpos == 256)
                 {
                         ssd_inread = 0;
-                        bem_debug("ssd_poll: read finished\n");
                         fdc_finishread();
                 }
         }
