@@ -30,6 +30,15 @@ struct
     int stepdir;
 } wd1770;
 
+static uint8_t nmi_on_completion[6] = {
+    0, // WD1770_NONE
+    1, // WD1770_ACORN
+    1, // WD1770_MASTER
+    0, // WD1770_OPUS
+    0, // WD1770_SOLIDISK
+    1  // WD1770_WATFORD
+};
+
 int byte;
 
 void wd1770_reset()
@@ -72,7 +81,7 @@ void wd1770_setspindown()
     motorspin = 45000;
 }
 
-#define track0 (wd1770.curtrack ? 4 : 0)
+#define track0 (wd1770.curtrack ? 0 : 4)
 
 static void begin_read_sector(const char *variant) {
     bem_debugf("wd1770: %s read sector drive=%d side=%d track=%d sector=%d dens=%d\n", variant, curdrive, wd1770.curside, wd1770.track, wd1770.sector, wd1770.density);
@@ -179,8 +188,8 @@ static void write_1770(uint16_t addr, uint8_t val)
                     if (wd1770.status & 0x01)
                         wd1770.status &= ~1;
                     else
-                        wd1770.status = 0x80 | track0;
-                    nmi = (val & 8) && (WD1770 == WD1770_ACORN || WD1770 == WD1770_MASTER) ? 1 : 0;
+                        wd1770.status = 0x80 | 0x20 | track0;
+                    nmi = (val & 0xc) && nmi_on_completion[WD1770] ? 1 : 0;
                     wd1770_setspindown();
                     break;
 
@@ -193,7 +202,7 @@ static void write_1770(uint16_t addr, uint8_t val)
                 default:
                     bem_debugf("wd1770: bad 1770 command %02X\n",val);
                     fdc_time = 0;
-                    if (WD1770 == WD1770_ACORN || WD1770 == WD1770_MASTER)
+                    if (nmi_on_completion[WD1770])
                         nmi = 1;
                     wd1770.status = 0x90;
                     wd1770_spindown();
@@ -258,6 +267,18 @@ static void write_ctrl_stl(uint8_t val)
     wd1770.density = !(wd1770.ctrl & 0x04);
 }
 
+static void write_ctrl_watford(uint8_t val)
+{
+    bem_debugf("wd1770: write watford-style ctrl %02X\n", val);
+    wd1770.ctrl = val;
+    //curdrive = (val & 0x01);
+    curdrive = 0;
+    //wd1770.curside =  (wd1770.ctrl & 0x02) ? 1 : 0;
+    wd1770.curside = 0;
+    //wd1770.density = (wd1770.ctrl & 0x80) ? 1 : 0;
+    wd1770.density = 0;
+}
+
 void wd1770_write(uint16_t addr, uint8_t val)
 {
     switch (WD1770)
@@ -286,8 +307,15 @@ void wd1770_write(uint16_t addr, uint8_t val)
             else
                 write_1770(addr, val);
             break;
+        case WD1770_WATFORD:
+            bem_debugf("wd1770: write to watford WD1770 board: %04x=%02x, pc=%04x\n", addr, val, pc);
+            if (addr & 0x0004)
+                write_1770(addr, val);
+            else
+                write_ctrl_watford(val);
+            break;
         default:
-            bem_warnf("unrecognised WD1770 board %d\n", WD1770);
+            bem_warnf("wd1770: write to unrecognised WD1770 board %d: %04x=%02x\n", WD1770, addr, val);
     }
 }
 
@@ -296,7 +324,7 @@ static uint8_t read_1770(uint16_t addr)
     switch (addr & 0x03)
     {
         case 0:
-            //bem_debugf("wd1770: status %02X, pc=%04x, nmi=%02x\n",wd1770.status, pc, nmi);
+            bem_debugf("wd1770: status %02X, pc=%04x, nmi=%02x\n",wd1770.status, pc, nmi);
             return wd1770.status;
 
         case 1:
@@ -333,6 +361,7 @@ uint8_t wd1770_read(uint16_t addr)
                 return read_1770(addr);
             break;
         case WD1770_SOLIDISK:
+        case WD1770_WATFORD:
             return read_1770(addr);
         default:
             bem_warnf("unrecognised WD1770 board %d\n", WD1770);
@@ -358,14 +387,14 @@ void wd1770_callback()
         case 6: /*Step out*/
             wd1770.status = 0x80 | track0;
             wd1770_setspindown();
-            if (WD1770 == WD1770_ACORN || WD1770 == WD1770_MASTER)
+            if (nmi_on_completion[WD1770])
                 nmi |= 1;
             break;
 
         case 8: /*Read sector*/
             wd1770.status = 0x80;
             wd1770_setspindown();
-            if (WD1770 == WD1770_ACORN || WD1770 == WD1770_MASTER)
+            if (nmi_on_completion[WD1770])
                 nmi |= 1;
             break;
 
@@ -377,7 +406,7 @@ void wd1770_callback()
         case 0xA: /*Write sector*/
             wd1770.status = 0x80;
             wd1770_setspindown();
-            if (WD1770 == WD1770_ACORN || WD1770 == WD1770_MASTER)
+            if (nmi_on_completion[WD1770])
                 nmi |= 1;
             break;
 
@@ -389,7 +418,7 @@ void wd1770_callback()
         case 0xC: /*Read address*/
             wd1770.status = 0x80;
             wd1770_setspindown();
-            if (WD1770 == WD1770_ACORN || WD1770 == WD1770_MASTER)
+            if (nmi_on_completion[WD1770])
                 nmi |= 1;
             wd1770.sector = wd1770.track;
             break;
@@ -397,7 +426,7 @@ void wd1770_callback()
         case 0xF: /*Write track*/
             wd1770.status = 0x80;
             wd1770_setspindown();
-            if (WD1770 == WD1770_ACORN || WD1770 == WD1770_MASTER)
+            if (nmi_on_completion[WD1770])
                 nmi |= 1;
             break;
     }
@@ -405,9 +434,11 @@ void wd1770_callback()
 
 void wd1770_data(uint8_t dat)
 {
-    wd1770.data = dat;
-    wd1770.status |= 2;
-    nmi |= 2;
+    if (wd1770.status &0x01) {
+        wd1770.data = dat;
+        wd1770.status |= 2;
+        nmi |= 2;
+    }
 }
 
 void wd1770_finishread()
@@ -419,7 +450,7 @@ void wd1770_notfound()
 {
     bem_debug("wd1770: not found\n");
     fdc_time = 0;
-    nmi = (WD1770 == WD1770_ACORN || WD1770 == WD1770_MASTER) ? 1 : 0;
+    nmi = nmi_on_completion[WD1770] ? 1 : 0;
     wd1770.status = 0x90;
     wd1770_spindown();
 }
@@ -428,7 +459,7 @@ void wd1770_datacrcerror()
 {
     // bem_debug("Data CRC\n");
     fdc_time = 0;
-    nmi = (WD1770 == WD1770_ACORN || WD1770 == WD1770_MASTER) ? 1 : 0;
+    nmi = nmi_on_completion[WD1770] ? 1 : 0;
     wd1770.status = 0x88;
     wd1770_spindown();
 }
@@ -437,7 +468,7 @@ void wd1770_headercrcerror()
 {
     // bem_debug("Header CRC\n");
     fdc_time = 0;
-    nmi = (WD1770 == WD1770_ACORN || WD1770 == WD1770_MASTER) ? 1 : 0;
+    nmi = nmi_on_completion[WD1770] ? 1 : 0;
     wd1770.status = 0x98;
     wd1770_spindown();
 }
@@ -459,7 +490,7 @@ int wd1770_getdata(int last)
 void wd1770_writeprotect()
 {
     fdc_time = 0;
-    nmi = (WD1770 == WD1770_ACORN || WD1770 == WD1770_MASTER) ? 1 : 0;
+    nmi = nmi_on_completion[WD1770] ? 1 : 0;
     wd1770.status = 0xC0;
     wd1770_spindown();
 }

@@ -9,5 +9,6 @@ void wd1770_write(uint16_t addr, uint8_t val);
 #define WD1770_MASTER   2
 #define WD1770_OPUS     3
 #define WD1770_SOLIDISK 4
+#define WD1770_WATFORD  5
 
 // End
