@@ -46,7 +46,7 @@ void wd1770_reset()
     nmi = 0;
     wd1770.status = 0;
     motorspin = 0;
-//  bem_debug("Reset 1770\n");
+    bem_debug("wd_1770: seset 1770\n");
     fdc_time = 0;
     if (WD1770)
     {
@@ -188,17 +188,16 @@ static void write_1770(uint16_t addr, uint8_t val)
                 case 0xD: /*Force interrupt*/
                     bem_debug("wd1770: force interrupt\n");
                     disc_abort(curdrive);
-                    fdc_time = 0;
+                    fdc_time = 1000;
                     if (wd1770.status & 0x01)
                         wd1770.status &= ~1;
                     else
                         wd1770.status = 0x80 | 0x20 | track0;
-                    nmi = nmi_on_completion[WD1770] ? 1 : 0;
                     wd1770_setspindown();
                     break;
 
                 case 0xF: /*Write track*/
-                    bem_debugf("wd1770: write track side=%d track=%d dens=%d\n", wd1770.curside, wd1770.track, wd1770.density);
+                    bem_debugf("wd1770: write track side=%d track=%d dens=%d, ctrl=%d\n", wd1770.curside, wd1770.track, wd1770.density, wd1770.ctrl);
                     wd1770.status = 0x80 | 0x1;
                     disc_format(curdrive, wd1770.track, wd1770.curside, wd1770.density);
                     break;
@@ -274,13 +273,13 @@ static void write_ctrl_stl(uint8_t val)
 static void write_ctrl_watford(uint8_t val)
 {
     bem_debugf("wd1770: write watford-style ctrl %02X\n", val);
+    if (val & 0x08)
+        wd1770_reset();
     wd1770.ctrl = val;
-    //curdrive = (val & 0x01);
-    curdrive = 0;
-    //wd1770.curside =  (wd1770.ctrl & 0x02) ? 1 : 0;
-    wd1770.curside = 0;
-    //wd1770.density = (wd1770.ctrl & 0x80) ? 1 : 0;
-    wd1770.density = 0;
+    curdrive = (val & 0x04) ? 1 : 0;
+    wd1770.curside =  (wd1770.ctrl & 0x02) ? 1 : 0;
+    wd1770.density = !(val & 0x01);
+    bem_debugf("wd1770: residual=%02X\n", val & ~(0x07));
 }
 
 void wd1770_write(uint16_t addr, uint8_t val)
@@ -427,6 +426,10 @@ void wd1770_callback()
             wd1770.sector = wd1770.track;
             break;
 
+        case 0xD: /* force interrupt */
+            nmi = nmi_on_completion[WD1770] ? 1 : 0;
+            break;
+
         case 0xF: /*Write track*/
             wd1770.status = 0x80;
             wd1770_setspindown();
@@ -438,7 +441,6 @@ void wd1770_callback()
 
 void wd1770_data(uint8_t dat)
 {
-    bem_debugf("wd1770: data(count=%d, dat=%02x\n", data_count++, dat);
     if (wd1770.status &0x01) {
         wd1770.data = dat;
         wd1770.status |= 2;
@@ -448,6 +450,7 @@ void wd1770_data(uint8_t dat)
 
 void wd1770_finishread()
 {
+    bem_debug("data read finished\n");
     fdc_time = 200;
 }
 
