@@ -21,6 +21,12 @@ static void ssd_seek(int drive, int track)
 {
         if (!ssd_f[drive]) return;
 //        printf("Seek :%i to %i\n",drive,track);
+
+        if (track < 0)
+            track = 0;
+        else  if (track > 79)
+            track = 79;
+
         ssd_trackc[drive] = track;
         if (dsd[drive])
         {
@@ -59,7 +65,7 @@ static void ssd_readsector(int drive, int sector, int track, int side, int densi
         ssd_drive  = drive;
 //        printf("Read sector %i %i %i %i\n",drive,side,track,sector);
 
-        if (!ssd_f[drive] || (side && !dsd[drive]) || density || track != ssd_trackc[drive])
+        if (!ssd_f[drive] || (side && !dsd[drive]) || density || track != ssd_trackc[drive] || sector >= 10)
         {
                 ssd_notfound = 500;
 ///                printf("Not found!\n");
@@ -78,7 +84,7 @@ static void ssd_writesector(int drive, int sector, int track, int side, int dens
         ssd_drive  = drive;
 //        printf("Write sector %i %i %i %i\n",drive,side,track,sector);
 
-        if (!ssd_f[drive] || (side && !dsd[drive]) || density || track != ssd_trackc[drive])
+        if (!ssd_f[drive] || (side && !dsd[drive]) || density || track != ssd_trackc[drive] || sector >= 10)
         {
                 ssd_notfound=500;
                 return;
