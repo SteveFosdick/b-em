@@ -46,7 +46,7 @@ void wd1770_reset()
     nmi = 0;
     wd1770.status = 0;
     motorspin = 0;
-    bem_debug("wd_1770: seset 1770\n");
+    bem_debug("wd_1770: reset 1770\n");
     fdc_time = 0;
     if (WD1770)
     {
@@ -327,7 +327,7 @@ static uint8_t read_1770(uint16_t addr)
     switch (addr & 0x03)
     {
         case 0:
-            bem_debugf("wd1770: status %02X, pc=%04x, nmi=%02x\n",wd1770.status, pc, nmi);
+            //bem_debugf("wd1770: status %02X, pc=%04x, nmi=%02x\n",wd1770.status, pc, nmi);
             return wd1770.status;
 
         case 1:
@@ -348,7 +348,7 @@ static uint8_t read_1770(uint16_t addr)
 
 uint8_t wd1770_read(uint16_t addr)
 {
-    bem_debugf("wd1770_read: addr=%04x, 1770=%d\n", addr, WD1770);
+    //bem_debugf("wd1770_read: addr=%04x, 1770=%d\n", addr, WD1770);
     switch (WD1770)
     {
         case WD1770_ACORN:
