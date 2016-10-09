@@ -19,7 +19,7 @@ int oldmodel;
 
 MODEL models[20] =
 {
-/*       Name                        8271  1770  65c02  B+  Master  SWRAM  A  OS 0.1  Compact  OS      ROM dir   CMOS           ROM setup function         Second processor*/
+/*       Name                         8271  1770             65c02  B+  Master  SWRAM  A  OS 0.1  Compact  OS      ROM dir   CMOS           ROM setup function         Second processor*/
         {"BBC A w/OS 0.1",            1,    WD1770_NONE,     0,     0,  0,      0,     1, 1,      0,       "",     "a01",      "",            mem_romsetup_os01,         -1},
         {"BBC B w/OS 0.1",            1,    WD1770_NONE,     0,     0,  0,      0,     0, 1,      0,       "",     "a01",      "",            mem_romsetup_os01,         -1},
         {"BBC A",                     1,    WD1770_NONE,     0,     0,  0,      0,     1, 0,      0,       "os",   "a",        "",            NULL,                      -1},
