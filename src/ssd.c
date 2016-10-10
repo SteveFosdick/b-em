@@ -237,7 +237,7 @@ static void ssd_close(int drive)
         if (ssd_f[drive]) fclose(ssd_f[drive]);
         ssd_f[drive] = NULL;
 }
-void ssd_load(int drive, char *fn)
+void ssd_load(int drive, const char *fn)
 {
         writeprot[drive] = 0;
         ssd_f[drive] = fopen(fn, "rb+");
@@ -259,7 +259,7 @@ void ssd_load(int drive, char *fn)
         drives[drive].abort       = ssd_abort;
 }
 
-void dsd_load(int drive, char *fn)
+void dsd_load(int drive, const char *fn)
 {
         writeprot[drive] = 0;
         ssd_f[drive] = fopen(fn, "rb+");
