@@ -232,6 +232,11 @@ void ssd_init()
         ssd_notfound = 0;
 }
 
+static void ssd_close(int drive)
+{
+        if (ssd_f[drive]) fclose(ssd_f[drive]);
+        ssd_f[drive] = NULL;
+}
 void ssd_load(int drive, char *fn)
 {
         writeprot[drive] = 0;
@@ -244,6 +249,7 @@ void ssd_load(int drive, char *fn)
         }
         fwriteprot[drive] = writeprot[drive];
         dsd[drive] = 0;
+        drives[drive].close       = ssd_close;
         drives[drive].seek        = ssd_seek;
         drives[drive].readsector  = ssd_readsector;
         drives[drive].writesector = ssd_writesector;
@@ -265,6 +271,7 @@ void dsd_load(int drive, char *fn)
         }
         fwriteprot[drive] = writeprot[drive];
         dsd[drive] = 1;
+        drives[drive].close       = ssd_close;
         drives[drive].seek        = ssd_seek;
         drives[drive].readsector  = ssd_readsector;
         drives[drive].writesector = ssd_writesector;
@@ -274,8 +281,3 @@ void dsd_load(int drive, char *fn)
         drives[drive].abort       = ssd_abort;
 }
 
-void ssd_close(int drive)
-{
-        if (ssd_f[drive]) fclose(ssd_f[drive]);
-        ssd_f[drive] = NULL;
-}

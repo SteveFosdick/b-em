@@ -1,5 +1,8 @@
+#define NUM_DRIVES 2
+
 typedef struct
 {
+        void (*close)(int drive);
         void (*seek)(int drive, int track);
         void (*readsector)(int drive, int sector, int track, int side, int density);
         void (*writesector)(int drive, int sector, int track, int side, int density);
@@ -9,7 +12,7 @@ typedef struct
         void (*abort)();
 } DRIVE;
 
-extern DRIVE drives[2];
+extern DRIVE drives[NUM_DRIVES];
 
 extern int curdrive;
 
@@ -41,6 +44,6 @@ extern int motorspin;
 extern int motoron;
 
 extern int defaultwriteprot;
-extern char discfns[2][260];
+extern char discfns[NUM_DRIVES][260];
 
-extern int writeprot[2], fwriteprot[2];
+extern int writeprot[NUM_DRIVES], fwriteprot[NUM_DRIVES];
