@@ -22,7 +22,7 @@ static int adf_informat=0;
 static void adf_seek(int drive, int track)
 {
         if (!adf_f[drive]) return;
-            
+           
 //        bem_debugf("Seek %i %i %i %i %i %i\n",drive,track,adfsectors[drive],adfsize[drive],adl[drive],adfsectors[drive]*adfsize[drive]);
 
         if (track < 0)

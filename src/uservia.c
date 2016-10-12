@@ -36,9 +36,44 @@ void uservia_write_portA(uint8_t val)
         lpt_dac = val; /*Printer port - no printer, just 8-bit DAC*/
 }
 
+static FILE *upfp;
+static int  upbit;
+static uint8_t upbyte;
+
 void uservia_write_portB(uint8_t val)
 {
-        /*User port - nothing emulated*/
+    /*User port - nothing emulated*/
+
+    if (upfp == NULL)
+        upfp = fopen("userport.dat", "wb");
+    if (upfp != NULL) {
+        val &= 0x04;
+        switch(upbit) {
+            case 0:
+                if (val == 0) { // start bit;
+                    upbit = 1;
+                    upbyte = 0;
+                }
+                break;
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+                upbyte >>= 1;
+                if (val)
+                    upbyte |= 0x80;
+                upbit++;
+                break;
+            case 9:
+                putc(upbyte, upfp);
+                fflush(upfp);
+                upbit = 0;
+        }
+    }
 }
 
 
@@ -46,11 +81,12 @@ uint8_t uservia_read_portA()
 {
         return 0xff; /*Printer port - read only*/
 }
+
 uint8_t uservia_read_portB()
 {
+        return 0x00; /*User port - nothing emulated*/
         if (curtube == 3 || mouse_amx) return mouse_portb;
         if (compactcmos) return compact_joystick_read();
-        return 0xff; /*User port - nothing emulated*/
 }
 
 void uservia_write(uint16_t addr, uint8_t val)

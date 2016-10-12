@@ -32,13 +32,13 @@ void serial_write(uint16_t addr, uint8_t val)
         {
                 /*RS423*/
                 acia_sr &= ~12; /*Clear acia DCD and CTS*/
-		acia_is_tape = 0;
+        acia_is_tape = 0;
         }
         else
         {
                 /*Tape*/
                 acia_sr &= ~8; /*Clear acia CTS*/
-		acia_is_tape = 1;
+        acia_is_tape = 1;
         }
 }
 

@@ -484,8 +484,10 @@ void wd1770_headercrcerror()
 int wd1770_getdata(int last)
 {
     // bem_debug("Disc get data\n");
-    if (!wd1770.written)
+    if (!wd1770.written) {
+        bem_debug("wd1770_getdata: no data in register\n");
         return -1;
+    }
     if (!last)
     {
         nmi |= 2;
