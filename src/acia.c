@@ -51,25 +51,25 @@ uint8_t acia_read(uint16_t addr)
 
 void acia_write(uint16_t addr, uint8_t val)
 {
-        if (addr & 1)
-        {
+    if (addr & 1)
+    {
         putchar(val);
         // acia_sr &= 0xFD;
-                // acia_updateint();
-        }
-        else if (val != acia_cr)
+        // acia_updateint();
+    }
+    else if (val != acia_cr)
     {
         if (!(val & 0x40)) // interupts disabled as serial TX buffer empties.
             fflush(stdout);
-            acia_cr = val;
-            if (val == 3)
-                    acia_reset();
-            switch (val & 3)
-                {
-                    case 1: acia_tapespeed=0; break;
-                    case 2: acia_tapespeed=1; break;
-            }
+        acia_cr = val;
+        if (val == 3)
+            acia_reset();
+        switch (val & 3)
+        {
+            case 1: acia_tapespeed=0; break;
+            case 2: acia_tapespeed=1; break;
         }
+    }
 }
 
 void dcd()
