@@ -14,7 +14,6 @@
 #include "6502.h"
 #include "acia.h"
 #include "adc.h"
-#include "adf.h"
 #include "model.h"
 #include "cmos.h"
 #include "config.h"
@@ -39,7 +38,6 @@
 #include "sn76489.h"
 #include "sound.h"
 #include "soundopenal.h"
-#include "ssd.h"
 #include "tape.h"
 #include "tapenoise.h"
 #include "tube.h"
@@ -239,8 +237,6 @@ void main_init(int argc, char *argv[])
         pal_init();
 #endif
         disc_init();
-        ssd_init();
-        adf_init();
         fdi_init();
 
         scsi_init();
